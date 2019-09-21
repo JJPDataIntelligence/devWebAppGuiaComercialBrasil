@@ -3,6 +3,7 @@ from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils.text import slugify
 from django.conf import settings
+from decimal import Decimal
 import json, os, googlemaps
 
 
@@ -57,22 +58,28 @@ class Cidade(models.Model):
     estado = models.CharField(max_length = 2)
     cidade = models.CharField(max_length = 200)
     bairro = models.CharField(max_length = 200, null = True, blank = True)
-    latitude = models.CharField(max_length = 10)
-    longitude = models.CharField(max_length = 10)
+    
+    latitude = models.CharField(max_length = 9, blank = True, null = True)
+    longitude = models.CharField(max_length = 9, blank = True, null = True)
+
 
     def save(self, *args, **kwargs):
         if not (self.latitude and self.longitude):
             try:
                 gmaps = googlemaps.Client(key = settings.GMAPS_KEY)
                 geocode_string = gmaps.geocode("{}/{} - {}".format(
-                    self.bairro, self.cidade, self.estado, self.pais
+                    self.cidade, self.estado, self.pais
                     ))
                 coordinates = geocode_string[0].get('geometry').get('location')
-
-                self.latitude, self.longitude = str(coordinates['lat'])[:10], str(coordinates['lng'])[:10]
+                
+                self.latitude, self.longitude = str(coordinates.get('lat'))[:9], str(coordinates.get('lng'))[:9]
+                
             except:
-                pass
+                self.latitude, self.longitude = None, None
         super(Cidade, self).save(*args, **kwargs)
+    
+    def __str__(self):
+        return "{}, {} - {}".format(self.cidade, self.estado, self.pais)
 
 
 # User Populated Models
@@ -81,12 +88,11 @@ class Categoria(models.Model):
     nome            = models.CharField(max_length = 200, unique = True)
     palavras_chave  = models.CharField(max_length = 200)
     descrição       = models.TextField(max_length = 1000)
-    data_criacao    = models.DateField(auto_now_add = True)
     
     imagem          = models.ImageField(upload_to = upload_path_categoria, null = True, blank = True)
 
     # Foreign Relation to Self (Recursive Construct)
-    subcategoria = models.ForeignKey('self', models.CASCADE, related_name = 'categoria_pai', null = True, blank = True)
+    categoria_pai = models.ForeignKey('self', models.CASCADE, related_name = 'subcategoria', null = True, blank = True)
 
     # Control Systemic Properties
     data_cadastro = models.DateField(auto_now_add = True)
@@ -98,35 +104,38 @@ class Categoria(models.Model):
     def get_palavras_chave(self, *args, **kwargs):
         return json.loads(self.palavras_chave)
 
+    def __str__(self):
+        if self.subcategoria:
+            return "{} - {}".format(self.subcategoria, self.nome)
+        else:
+            return "{}".format(self.nome)
+
 class Endereco(models.Model):
     # Regular Properties
-    codigo_pais = models.CharField(max_length = 2)
-    estado = models.CharField(max_length = 2)
-    cidade = models.CharField(max_length = 200)
+    cidade = models.ForeignKey(Cidade, models.CASCADE, 'endereco_cidade')
     bairro = models.CharField(max_length = 200)
     logradouro = models.CharField(max_length = 200)
     numero = models.CharField(max_length = 5)
     
-    latitude = models.CharField(max_length = 10)
-    longitude = models.CharField(max_length = 10)
+    latitude = models.CharField(max_length = 9, blank = True, null = True)
+    longitude = models.CharField(max_length = 9, blank = True, null = True)
 
     def save(self, *args, **kwargs):
         if not (self.latitude and self.longitude):
             try:
                 gmaps = googlemaps.Client(key = settings.GMAPS_KEY)
                 geocode_string = gmaps.geocode("{}, {} - {} - {}/{} - {}".format(
-                    self.logradouro, self.numero, self.bairro, self.cidade, self.estado, self.pais
+                    self.logradouro, self.numero, self.bairro, self.cidade.cidade, self.cidade.estado, self.cidade.pais
                     ))
-                coordinates = geocode_string.get('geometry').get('location')
-
-                self.latitude, self.longitude = str(coordinates['lat'])[:10], str(coordinates['lng'])[:10]
+                coordinates = geocode_string[0].get('geometry').get('location')
+                self.latitude, self.longitude = str(coordinates['lat'])[:9], str(coordinates['lng'])[:9]
             except:
                 pass
         super(Endereco, self).save(*args, **kwargs)
 
     def __str__(self, *args, **kwargs):
         return "{}, {} - {} - {}/{} - {}".format(
-                self.logradouro, self.numero, self.bairro, self.cidade, self.estado, self.pais
+                self.logradouro, self.numero, self.bairro, self.cidade.cidade, self.cidade.estado, self.cidade.pais
                 )
 
 class DadosDivulgacao(models.Model):
