@@ -1,10 +1,12 @@
 from django.db import models
-from django.db.models.signals import post_delete
+from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
+from django.utils import timezone
 from django.utils.text import slugify
 from django.conf import settings
+from django.contrib.auth.models import User
 from decimal import Decimal
-import json, os, googlemaps
+import json, os, googlemaps, statistics
 
 
 # Upload Paths
@@ -15,37 +17,37 @@ def upload_path_categoria(instance, filename):
     return path
 
 def upload_path_cartao(instance, filename):
-    path = os.path.join("uploads", os.path.join(slugify(instance.estabelecimento_imagens_estabelecimento.nome_estabelecimento), "{}_cartao.{}".format(slugify(instance.estabelecimento_imagens_estabelecimento.nome_estabelecimento), filename[-3:])))
+    path = os.path.join("uploads", os.path.join(slugify(instance.nome_estabelecimento), "{}_cartao.{}".format(slugify(instance.nome_estabelecimento), filename[-3:])))
     if len(path) <= 250:
         path = path[:246] + path[-4:]
     return path
 
 def upload_path_imagem_1(instance, filename):
-    path = os.path.join("uploads", os.path.join(slugify(instance.estabelecimento_imagens_estabelecimento.nome_estabelecimento), "1-{}.{}".format(slugify(instance.estabelecimento_imagens_estabelecimento.nome_estabelecimento), filename[-3:])))
+    path = os.path.join("uploads", os.path.join(slugify(instance.nome_estabelecimento), "1-{}.{}".format(slugify(instance.nome_estabelecimento), filename[-3:])))
     if len(path) <= 250:
         path = path[:246] + path[-4:]
     return path
 
 def upload_path_imagem_2(instance, filename):
-    path = os.path.join("uploads", os.path.join(slugify(instance.estabelecimento_imagens_estabelecimento.nome_estabelecimento), "2-{}.{}".format(slugify(instance.estabelecimento_imagens_estabelecimento.nome_estabelecimento), filename[-3:])))
+    path = os.path.join("uploads", os.path.join(slugify(instance.nome_estabelecimento), "2-{}.{}".format(slugify(instance.nome_estabelecimento), filename[-3:])))
     if len(path) <= 250:
         path = path[:246] + path[-4:]
     return path
 
 def upload_path_imagem_3(instance, filename):
-    path = os.path.join("uploads", os.path.join(slugify(instance.estabelecimento_imagens_estabelecimento.nome_estabelecimento), "3-{}.{}".format(slugify(instance.estabelecimento_imagens_estabelecimento.nome_estabelecimento), filename[-3:])))
+    path = os.path.join("uploads", os.path.join(slugify(instance.nome_estabelecimento), "3-{}.{}".format(slugify(instance.nome_estabelecimento), filename[-3:])))
     if len(path) <= 250:
         path = path[:246] + path[-4:]
     return path
 
 def upload_path_imagem_4(instance, filename):
-    path = os.path.join("uploads", os.path.join(slugify(instance.estabelecimento_imagens_estabelecimento.nome_estabelecimento), "4-{}.{}".format(slugify(instance.estabelecimento_imagens_estabelecimento.nome_estabelecimento), filename[-3:])))
+    path = os.path.join("uploads", os.path.join(slugify(instance.nome_estabelecimento), "4-{}.{}".format(slugify(instance.nome_estabelecimento), filename[-3:])))
     if len(path) <= 250:
         path = path[:246] + path[-4:]
     return path
 
 def upload_path_imagem_5(instance, filename):
-    path = os.path.join("uploads", os.path.join(slugify(instance.estabelecimento_imagens_estabelecimento.nome_estabelecimento), "5-{}.{}".format(slugify(instance.estabelecimento_imagens_estabelecimento.nome_estabelecimento), filename[-3:])))
+    path = os.path.join("uploads", os.path.join(slugify(instance.nome_estabelecimento), "5-{}.{}".format(slugify(instance.nome_estabelecimento), filename[-3:])))
     if len(path) <= 250:
         path = path[:246] + path[-4:]
     return path
@@ -105,8 +107,8 @@ class Categoria(models.Model):
         return json.loads(self.palavras_chave)
 
     def __str__(self):
-        if self.subcategoria:
-            return "{} - {}".format(self.subcategoria, self.nome)
+        if self.categoria_pai:
+            return "{} - {}".format(self.categoria_pai, self.nome)
         else:
             return "{}".format(self.nome)
 
@@ -141,32 +143,38 @@ class Endereco(models.Model):
 class DadosDivulgacao(models.Model):
     nome = models.CharField(max_length = 200, unique = True)
     descricao = models.CharField(max_length = 3000)
-    telefone = models.CharField(max_length = 13)
-    site = models.URLField()
+    telefone = models.CharField(max_length = 13, blank = True, null = True)
+    site = models.URLField(blank = True, null = True)
 
     # Social Media
-    instagram = models.URLField()
-    facebook = models.URLField()
-    twitter = models.URLField()
-    linkedin = models.URLField()
+    instagram = models.URLField(blank = True, null = True)
+    facebook = models.URLField(blank = True, null = True)
+    twitter = models.URLField(blank = True, null = True)
+    linkedin = models.URLField(blank = True, null = True)
 
     def save(self, *args, **kwargs):
-        if not nome:
-            self.nome = self.estabelecimento_dados_divulgacao.nome_estabelecimento
+        if not self.nome:
+            self.nome = self.estabelecimento_dados_divulgacao.nome
         super(DadosDivulgacao, self).save(*args, **kwargs)
 
-class ImagensEstabelecimento(models.Model):
-    imagem_cartao = models.ImageField(upload_to = upload_path_cartao)
-    imagem_1 = models.ImageField(upload_to = upload_path_imagem_1)
-    imagem_2 = models.ImageField(upload_to = upload_path_imagem_2)
-    imagem_3 = models.ImageField(upload_to = upload_path_imagem_3)
-    imagem_4 = models.ImageField(upload_to = upload_path_imagem_4)
-    imagem_5 = models.ImageField(upload_to = upload_path_imagem_5)
-    
+    def __str__(self):
+        return self.nome
 
+class ImagensEstabelecimento(models.Model):
+    nome_estabelecimento = models.CharField(max_length = 200, unique = True)
+    imagem_cartao = models.ImageField(upload_to = upload_path_cartao)
+    imagem_1 = models.ImageField(upload_to = upload_path_imagem_1, null = True, blank = True)
+    imagem_2 = models.ImageField(upload_to = upload_path_imagem_2, null = True, blank = True)
+    imagem_3 = models.ImageField(upload_to = upload_path_imagem_3, null = True, blank = True)
+    imagem_4 = models.ImageField(upload_to = upload_path_imagem_4, null = True, blank = True)
+    imagem_5 = models.ImageField(upload_to = upload_path_imagem_5, null = True, blank = True)
+
+    def __str__(self):
+        return self.nome_estabelecimento
+    
 class FatoEstabelecimento(models.Model):
     # Regular Properties
-    nome_estabelecimento = models.CharField(max_length = 200, unique = True)
+    nome = models.CharField(max_length = 200, unique = True)
     CNPJ_estabelecimento = models.CharField(max_length = 18, null = True, blank = True)
 
     nome_responsavel = models.CharField(max_length = 200)
@@ -179,26 +187,60 @@ class FatoEstabelecimento(models.Model):
 
     observacoes = models.TextField(null = True, blank = True)
 
+    status_destaque = models.BooleanField(default = False)
+    impulsionamento = models.IntegerField(default = 0)
+    nota = models.DecimalField(max_digits = 3, decimal_places = 2, default = 3)
+
     # Foreign Relations
-    categoria = models.ForeignKey(Categoria, models.CASCADE, related_name = 'estabelecimento_categoria')
-    endereco_fiscal = models.ForeignKey(Endereco, models.CASCADE, 'estabelecimento_endereco_fiscal')
-    endereco_comercial = models.ForeignKey(Endereco, models.CASCADE, 'estabelecimento_endereco_comercial')
-    dados_divulgacao = models.ForeignKey(DadosDivulgacao, models.CASCADE, 'estabelecimento_dados_divulgacao')
-    imagens_divulgacao = models.ForeignKey(ImagensEstabelecimento, models.CASCADE, 'estabelecimento_imagens_divulgacao')
+    categoria = models.ForeignKey(Categoria, models.CASCADE, related_name = 'estabelecimento_categoria', blank = True, null = True)
+    endereco_fiscal = models.ForeignKey(Endereco, models.CASCADE, 'estabelecimento_endereco_fiscal', blank = True, null = True)
+    endereco_comercial = models.ForeignKey(Endereco, models.CASCADE, 'estabelecimento_endereco_comercial', blank = True, null = True)
+    dados_divulgacao = models.OneToOneField(DadosDivulgacao, models.CASCADE, blank = True, null = True)
+    imagens_divulgacao = models.OneToOneField(ImagensEstabelecimento, models.CASCADE, blank = True, null = True)
 
     # Control Systemic Properties
     data_cadastro = models.DateField(auto_now_add = True)
     data_ultima_modificacao = models.DateField(auto_now = True)
 
+    def __str__(self):
+        return self.nome
 
+    def save(self, *args, **kwargs):
+        if not self.nota > 5:
+            super(FatoEstabelecimento, self).save(*args, **kwargs)
+
+class Impulsionamento(models.Model):
+    estabelecimento = models.ForeignKey(FatoEstabelecimento, models.CASCADE, "impulsionamento_estabelecimento")
+    usuario = models.ForeignKey(User, models.CASCADE, "impulsionamento_usuario", blank = True, null = True)
+    data = models.DateField(auto_now_add = True)
+
+class Nota(models.Model):
+    estabelecimento = models.ForeignKey(FatoEstabelecimento, models.CASCADE, "nota_estabelecimento")
+    usuario = models.ForeignKey(User, models.CASCADE, "nota_usuario", blank = True, null = True)
+    nota = models.DecimalField(max_digits = 3, decimal_places = 2)
+    data = models.DateField(auto_now_add = True)
+
+    def save(self, *args, **kwargs):
+        if not self.nota > 5:
+            super(Nota, self).save(*args, **kwargs)
 
 # Signalized Functions
+@receiver(post_save)
+def summarize_impulsionamentos(sender, instance, **kwargs):
+    if sender._meta.model_name == "impulsionamento":
+        instance.estabelecimento.impulsionamento = Impulsionamento.objects.filter(estabelecimento = instance.estabelecimento).count()
+        instance.estabelecimento.save()
+    elif sender._meta.model_name == "nota":
+        instance.estabelecimento.nota = statistics.mean([instance.estabelecimento.nota, instance.nota])
+        instance.estabelecimento.save()
+
+
 @receiver(post_delete)
 def submission_delete(sender, instance, **kwargs):
-    file_holder_models = ['Categoria', 'ImagensEstabelecimento']
-    if sender == 'Categoria':
+    if sender._meta.model_name == 'Categoria':
         instance.imagem.delete(False) 
-    elif sender == 'ImagensEstabelecimento':
+    elif sender._meta.model_name == 'imagensestabelecimento':
+        instance.imagem_cartao.delete(False)
         instance.imagem_1.delete(False)
         instance.imagem_2.delete(False) 
         instance.imagem_3.delete(False)

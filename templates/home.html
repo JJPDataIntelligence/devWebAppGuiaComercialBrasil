@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}Guia Comercial Brasil{% endblock title %}
+
+{% block content %}
+
+
+<h3 style="color: red;">{{cidade}}</h3>
+
+
+
+<!-- ELEMENTOS NO CONTEXTO -->
+
+    <!-- ELEMENTO: "categorias" -->
+        <!-- TIPO: LISTA DE OBJETOS -->
+        <!-- CONTEÚDO: CATEGORIAS E SUBCATEGORIAS CADASTRADAS -->
+        <!-- INÍCIO EXEMPLO DE USO -->
+        <ul>
+            {% for categoria in categorias %}
+                {% if categoria.subcategoria %}
+                <li>{{categoria}}</li>
+                <ul>
+                    {% for subcategoria in categoria.subcategoria.all %}
+                        <li>{{subcategoria}}</li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                    <li>{{categoria}}</li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+        <!-- FINAL EXEMPLO DE USO -->
+
+    <!-- ELEMENTO: "destaques" -->
+        <!-- TIPO: LISTA DE OBJETOS -->
+        <!-- CONTEÚDO: LISTA DE ESTABELECIMENTO QUE POSSUEM FLAG DE DESTAQUE -->
+        <!-- INÍCIO EXEMPLO DE USO -->
+        <h3>DESTAQUES</h3>
+        <ul>
+            {% for estabelecimento in destaques %}
+            <li>{{estabelecimento}}</li>
+            {% endfor %}
+        </ul>    
+        <!-- FINAL EXEMPLO DE USO -->
+
+    <!-- ELEMENTO: "top_impulsionamentos" -->
+        <!-- TIPO: LISTA DE OBJETOS -->
+        <!-- CONTEÚDO: LISTA DE 10 ESTABELECIMENTOS COM MAIOR NÚMERO DE IMPULSIONAMENTOS -->
+        <!-- INÍCIO EXEMPLO DE USO -->
+        <h3>TOP_IMPULSIONAMENTOS</h3>
+        <ul>
+            {% for estabelecimento in top_impulsionamentos %}
+            <li>{{estabelecimento}}</li>
+            {% endfor %}
+        </ul>
+        <!-- FINAL EXEMPLO DE USO -->
+
+    <!-- ELEMENTO: "top_impulsionamentos_dia" -->
+        <!-- TIPO: DICIONÁRIO -->
+        <!-- CONTEÚDO: ESTABELECIMENTO COM O MAIOR NÚMERO DE IMPULSIONAMENTOS NO DIA E NÚMERO DE IMPULSIONAMENTOS -->
+        <!-- INÍCIO EXEMPLO DE USO -->
+        <h3>TOP_IMPULSIONAMENTOS_DIA</h3>
+        <ul>
+            <li>{{top_impulsionamentos_dia.estabelecimento}}</li>
+            <li>{{top_impulsionamentos_dia.total_impulsionamentos}}</li>
+        </ul>
+        <!-- FINAL EXEMPLO DE USO -->
+
+    <!-- ELEMENTO: "top_nota" -->
+        <!-- TIPO: LISTA DE OBJETOS -->
+        <!-- CONTEÚDO: LISTA DE 10 ESTABELECIMENTOS COM MAIOR NOTA -->
+        <!-- INÍCIO EXEMPLO DE USO -->
+        <h3>TOP_NOTA</h3>
+        <ul>
+            {% for estabelecimento in top_nota %}
+            <li>{{estabelecimento}}</li>
+            {% endfor %}
+        </ul>
+        <!-- FINAL EXEMPLO DE USO -->
+
+{% endblock content %}
