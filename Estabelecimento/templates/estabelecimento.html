@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% load bootstrap4 %}
+{% load static %}
+{% block title %}Estabelecimento - {{object.nome}}{% endblock title %}
+{% block content %}
+<h1>{{object}}</h1>
+<p><b>Categoria:</b> {{object.categoria}}</p>
+<p><b>Endereço Comercial:</b> {{object.endereco_comercial}} ({{object.endereco_comercial.latitude}}, {{object.endereco_comercial.longitude}})</p>
+<p><b>Endereço Fiscal:</b> {{object.endereco_fiscal}} ({{object.endereco_fiscal.latitude}}, {{object.endereco_fiscal.longitude}})</p>
+<p><b>Destaque:</b> {{object.status_destaque}}</p>
+<p><b>Impulsionamentos:</b> {{object.impulsionamento}}</p>
+<p><b>Nota:</b> {{object.nota}}</p>
+<p><b>Dados Divulgação:</b> {{object.dados_divulgacao}}</p>
+<p><b>Imagens Divulgação:</b> {{object.imagens_divulgacao}}</p>
+<p><b>Telefone Contato 1:</b> {{object.telefone_contato_1}}</p>
+<p><b>Telefone Contato 2:</b> {{object.telefone_contato_2}}</p>
+<p><b>Email Contato:</b> {{object.email_contato}}</p>
+
+{% endblock content %}

@@ -5,9 +5,14 @@
 {% block content %}
 
 
-<h3 style="color: red;">{{cidade}}</h3>
+<h3 style="color: red;">CIDADE: {{cidade}}</h3>
 
+<br>
 
+<span>Texto Customizado 1</span>
+<p>{{customizacao.texto_1}}</p>
+<span>Texto Customizado 2</span>
+<p>{{customizacao.texto_2}}</p>
 
 <!-- ELEMENTOS NO CONTEXTO -->
 
@@ -21,7 +26,16 @@
                 <li>{{categoria}}</li>
                 <ul>
                     {% for subcategoria in categoria.subcategoria.all %}
+                        {% if subcategoria.subcategoria %}
                         <li>{{subcategoria}}</li>
+                        <ul>
+                            {% for subsubcategoria in subcategoria.subcategoria.all %}
+                                <li> {{subsubcategoria}} </li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                            <li>{{subcategoria}}</li>
+                        {% endif %}
                     {% endfor %}
                 </ul>
                 {% else %}
@@ -40,7 +54,7 @@
             {% for estabelecimento in destaques %}
             <li>{{estabelecimento}}</li>
             {% endfor %}
-        </ul>    
+        </ul>
         <!-- FINAL EXEMPLO DE USO -->
 
     <!-- ELEMENTO: "top_impulsionamentos" -->
@@ -61,8 +75,10 @@
         <!-- INÍCIO EXEMPLO DE USO -->
         <h3>TOP_IMPULSIONAMENTOS_DIA</h3>
         <ul>
-            <li>{{top_impulsionamentos_dia.estabelecimento}}</li>
-            <li>{{top_impulsionamentos_dia.total_impulsionamentos}}</li>
+            {% if top_impulsionamentos %}
+                <li>{{top_impulsionamentos_dia.estabelecimento}}</li>
+                <li>{{top_impulsionamentos_dia.total}} Impulsionamentos Hoje</li>
+            {% endif %}
         </ul>
         <!-- FINAL EXEMPLO DE USO -->
 

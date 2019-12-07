@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% load bootstrap4 %}
+
+{% block title %}Estabelecimentos - {{categoria}}{% endblock title %}
+
+{% block content %}
+
+<ul>
+    {% for estabelecimento in estabelecimentos %}
+        <li>{{estabelecimento}}</li>    
+    {% empty %}
+        <li>Nenhum estabelecimento dessa categoria foi encontrado na sua cidade.</li>
+    {% endfor %}
+</ul>
+
+{% endblock content %}

@@ -19,6 +19,13 @@ import Estabelecimento.views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+
     path('estabelecimento/', include('Estabelecimento.urls')),
-    path('', Estabelecimento.views.HomeView.as_view())
+    path('estabelecimento/<slug:slug>', Estabelecimento.views.EstabelecimentoView.as_view(), name = "estabelecimento"),
+    
+    path('categoria/<categoria_id>', Estabelecimento.views.CategoryView.as_view(), kwargs = {"cidade" : False}, name = "estab_categoria"),
+
+    path('', Estabelecimento.views.HomeView.as_view(), kwargs = {"cidade" : False}, name = "home"),
+    
+    path('cidades/', Estabelecimento.views.SelectCity.as_view(), name = "selectCity")
 ]

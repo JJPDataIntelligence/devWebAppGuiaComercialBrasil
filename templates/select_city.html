@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% load bootstrap4 %}
+
+{% block content %}
+
+<!--FORMULARIO DE ESCOLHA DA CIDADE-->
+
+<form action="" method="POST" class="form col-sm-8 offset-sm-2 mt-5">
+    {% csrf_token %}
+    {% bootstrap_form form %}
+    {% buttons %}
+        <button type="submit" class="btn btn-primary float-right">Trocar Cidade !</button>
+    {% endbuttons %}
+</form>
+
+
+
+
+
+{% endblock content %}

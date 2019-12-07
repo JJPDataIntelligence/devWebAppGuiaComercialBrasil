@@ -175,6 +175,7 @@ class ImagensEstabelecimento(models.Model):
 class FatoEstabelecimento(models.Model):
     # Regular Properties
     nome = models.CharField(max_length = 200, unique = True)
+    slug = models.SlugField(blank = True)
     CNPJ_estabelecimento = models.CharField(max_length = 18, null = True, blank = True)
 
     nome_responsavel = models.CharField(max_length = 200)
@@ -193,8 +194,8 @@ class FatoEstabelecimento(models.Model):
 
     # Foreign Relations
     categoria = models.ForeignKey(Categoria, models.CASCADE, related_name = 'estabelecimento_categoria', blank = True, null = True)
-    endereco_fiscal = models.ForeignKey(Endereco, models.CASCADE, 'estabelecimento_endereco_fiscal', blank = True, null = True)
-    endereco_comercial = models.ForeignKey(Endereco, models.CASCADE, 'estabelecimento_endereco_comercial', blank = True, null = True)
+    endereco_fiscal = models.ForeignKey(Endereco, models.CASCADE, related_name = 'estabelecimento_endereco_fiscal', blank = True, null = True)
+    endereco_comercial = models.ForeignKey(Endereco, models.CASCADE, related_name = 'estabelecimento_endereco_comercial', blank = True, null = True)
     dados_divulgacao = models.OneToOneField(DadosDivulgacao, models.CASCADE, blank = True, null = True)
     imagens_divulgacao = models.OneToOneField(ImagensEstabelecimento, models.CASCADE, blank = True, null = True)
 
@@ -207,6 +208,8 @@ class FatoEstabelecimento(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.nota > 5:
+            if not self.slug:
+                self.slug = slugify(self.nome)
             super(FatoEstabelecimento, self).save(*args, **kwargs)
 
 class Impulsionamento(models.Model):
